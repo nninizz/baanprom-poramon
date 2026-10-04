@@ -1,13 +1,13 @@
-"""ค่าตั้งต้นของระบบ (ค่าที่มาจาก Open Question ติดป้าย Q-xx ไว้ แก้ที่นี่ที่เดียวเมื่อได้คำตอบ)"""
+"""ค่าตั้งต้นของระบบตาม spec.md Draft v2 และ ASM-08 ถึง ASM-13"""
 import os
 
 # ต่อฐานข้อมูลผ่านตัวแปรแวดล้อม ระบบจริงเป็น PostgreSQL (ทีมเลือกเอง ไม่ได้มาจาก spec)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./baanprom.db")
 
-# REQ-FN-041 ระยะล็อกช่วงเวลาชั่วคราว (Q-18 ค่าชั่วคราว 10 นาที จาก EV-041)
+# REQ-FN-041 และ ASM-08 ระยะล็อกช่วงเวลา 10 นาที
 HOLD_MINUTES = int(os.getenv("HOLD_MINUTES", "10"))
 
-# REQ-IF-005 เวลารอ gateway ก่อน status-inquiry (Q-19 ค่าชั่วคราว 30 วินาที)
+# REQ-IF-005 และ ASM-09 เวลารอ gateway ก่อน status-inquiry 30 วินาที
 GATEWAY_TIMEOUT_SECONDS = int(os.getenv("GATEWAY_TIMEOUT_SECONDS", "30"))
 
 # REQ-SEC-004 ช่างเห็นเบอร์ลูกค้าได้ก่อนนัดกี่ชั่วโมง

@@ -1,6 +1,7 @@
 """ตารางตาม plan.md ข้อ 3 (MD-DOM-01) ชื่อสถานะตาม glossary.md"""
+from calendar import monthrange
 from datetime import datetime
-from sqlalchemy import String, Integer, Float, DateTime, ForeignKey
+from sqlalchemy import String, Integer, Float, DateTime, ForeignKey, delete
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -91,6 +92,7 @@ class Payment(Base):
     gateway_ref: Mapped[str] = mapped_column(String(50))
     result: Mapped[str] = mapped_column(String(10))  # success / failed / timeout
     authorized_at: Mapped[datetime] = mapped_column(DateTime)
+    captured_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # ASM-08
 
 
 class Refund(Base):
@@ -106,3 +108,18 @@ def set_status(db, job: Job, to_status: str, now: datetime) -> None:
     assert to_status in JOB_STATUSES, to_status
     db.add(JobStatusHistory(job_id=job.id, from_status=job.status, to_status=to_status, at=now))
     job.status = to_status
+
+
+def status_history_cutoff(now: datetime) -> datetime:
+    """คำนวณเส้นตัดประวัติย้อนหลัง 24 เดือนปฏิทิน (REQ-DAT-002, ASM-15)"""
+    year = now.year - 2
+    day = min(now.day, monthrange(year, now.month)[1])
+    return now.replace(year=year, day=day)
+
+
+def purge_status_history(db, now: datetime) -> int:
+    """ลบประวัติสถานะที่เก่ากว่า 24 เดือนและคืนจำนวนรายการที่ลบ (REQ-DAT-002, ASM-15)"""
+    cutoff = status_history_cutoff(now)
+    result = db.execute(delete(JobStatusHistory).where(JobStatusHistory.at < cutoff))
+    db.commit()
+    return result.rowcount or 0

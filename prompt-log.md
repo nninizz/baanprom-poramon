@@ -111,3 +111,73 @@ AI ถาม: ยอดมัดจำบนหน้าจอเอาจาก
 cd backend && pytest -v -k "AC_" 2>&1 | tee ../specs/002-booking/test-run.txt  ผล 15 passed, 1 skipped
 cd frontend && npm test  ผล 1 passed
 กรอก ac-results.md รอบที่ 2 และสรุป gaps.md 10 แถว
+
+## #35 | 4 ต.ค. 2569 | Copilot Chat (Agent) | /clarify specs/002-booking/spec.md (ตอบกลับ)
+
+คำสั่งของทีม: "เอาตามที่เดาเลย"
+
+AI ถาม 8 ข้อเกี่ยวกับพฤติกรรมเมื่อ Payment Gateway และระบบส่งข้อความไม่ตอบ, ความหมายของการชำระสำเร็จ, BR-01 R3, ช่วง 7 วันและระยะ 15 กิโลเมตร, วิธีวัด REQ-QA-003, ขอบเขตการเปิดเผยเบอร์ และการจัดการประวัติครบ 24 เดือน
+
+คำตอบหรือการตัดสินใจของทีม: ให้ใช้สมมติฐานตามที่ AI ระบุทั้งหมด
+
+สิ่งที่แก้ใน specs/002-booking/spec.md: เปลี่ยนสถานะเป็น Draft v2; ระบุเงื่อนไข capture, gateway timeout และ status-inquiry; กำหนดพฤติกรรมการแจ้งเตือน; ยืนยัน R3; ระบุขอบเขต 7 วัน ระยะ 15 กิโลเมตร และการวัด p95; ระบุขอบเขตการเปิดเผยเบอร์และการลบประวัติ; แปลง Q-14, Q-18, Q-19, Q-22, Q-23 เป็น ASM-08 ถึง ASM-15; อัปเดต Change Log, Requirements, Acceptance Criteria, Data และ Decision Log
+
+## #36 | 4 ต.ค. 2569 | Copilot Chat (Agent) | /plan specs/002-booking/spec.md
+
+ผลลัพธ์: ปรับ specs/002-booking/plan.md จาก plan เดิมให้ตรงกับ spec.md v1.3 Draft v2 โดยยังไม่เขียนโค้ด
+
+สิ่งที่ทำ: อัปเดตสรุปแนวทางและเทคโนโลยีโดยระบุรายการที่ทีมเลือกเอง; ระบุโครงโฟลเดอร์ ไฟล์ติดตั้ง และคำสั่งรัน test; ปรับโมเดลข้อมูลและ API ให้รองรับ ASM-08 ถึง ASM-15; เติมตารางตรวจ REQ-CON-001, REQ-CON-003, IF-01 ถึง IF-03 และ MD-CTX-01, MD-DOM-01, MD-STM-01, MD-SEQ-07-05; ทำตารางทดสอบครบ AC-07-01 ถึง AC-07-10; จัดลำดับงาน 10 ขั้น; คัดลอก Q-05 ไว้ในหัวข้อสิ่งที่ยังไม่ทำ
+
+ข้อจำกัดที่ยังไม่ได้ใช้: ไม่มี Constraint หรือ IF ที่ยังไม่ได้ใช้ใน plan; Q-05 เป็น Open Question ของ non-goal ไม่ใช่ Constraint และไม่สร้างส่วนที่เกี่ยวข้อง
+
+AC ที่ทดสอบยาก: AC-07-08 ยังใช้การทดสอบย่อส่วน 20 คำขอแทนผู้ใช้พร้อมกัน 500 คน และต้องรายงานข้อจำกัดของสภาพแวดล้อม
+
+สิ่งที่ AI อยากเดาแต่ไม่ได้เดา: พฤติกรรมการจองโดยไม่ลงทะเบียนตาม Q-05 จะยังไม่สร้างจนกว่าทีมจะตัดสินใจ
+
+## #37 | 4 ต.ค. 2569 | Copilot Chat (Agent) | /tasks specs/002-booking/spec.md
+
+ผลลัพธ์: สร้าง specs/002-booking/tasks.md ใหม่จาก spec.md v1.3 Draft v2 และ plan.md โดยยังไม่เริ่มทำ task ใด
+
+สรุป: 12 task และ 0 task รอ Q-xx; ทุก task อยู่ในสถานะ "พร้อมทำ"
+
+สิ่งที่ทำ: แยกงานตาม dependency ตั้งแต่โครง/โมเดล, hold, ค้นช่าง, booking/payment, timeout/status-inquiry, refund, notification, privacy, load test และ frontend; ทำตารางตรวจ AC-07-01 ถึง AC-07-10 ครบ; ทำตารางตรวจ REQ-CON-001, REQ-CON-003, IF-01 ถึง IF-03 และ model/context IDs ครบ; คัดลอก Q-05 ไว้ในหัวข้อสิ่งที่ยังไม่ทำโดยไม่สร้าง task ให้พฤติกรรมนอกขอบเขต
+
+task ที่ยากที่สุด: T-06 เพราะต้องคุมลำดับ authorize, status-inquiry, capture, ผล unknown/approved และการไม่ตัดเงินซ้ำ
+
+AC ที่ทดสอบยาก: AC-07-08 ต้องการผู้ใช้พร้อมกัน 500 คน จึงกำหนด T-10 ให้ทดสอบย่อส่วน 20 คำขอและบันทึกข้อจำกัดไว้ โดยไม่ถือเป็นผลตรวจรับจริง
+
+## #38 | 4 ต.ค. 2569 | Copilot Chat (Agent) | แก้ tasks.md: เพิ่ม Safe implementation note
+
+ทีมขอ: "ทำ safe implementation note"
+
+สิ่งที่แก้: เพิ่มหัวข้อ Safe implementation note ใน specs/002-booking/tasks.md โดยกำหนดขอบเขตไม่ให้สร้างเส้นทางจองโดยไม่ลงทะเบียนตาม Q-05; ย้ำลำดับ capture และการใช้ gatewayRef เดิม; ย้ำ R3 ต้องตอบ 409 และไม่คืนมัดจำ; ป้องกัน retry notification สร้าง Job หรือ Payment ซ้ำ; และห้าม log Customer.phone ตาม REQ-PRV-002
+
+## #40 | 4 ต.ค. 2569 | Copilot Chat (Agent) | /implement T-11 specs/002-booking/tasks.md
+
+ไฟล์ที่สร้างหรือแก้: specs/002-booking/tasks.md
+
+ผลการทำงาน: ตรวจพบว่า frontend implementation และ test ของ T-11 มีอยู่แล้วตรงตาม plan; ไม่แก้ source frontend เพื่อไม่เปลี่ยนไฟล์เกินความจำเป็น; เปลี่ยนสถานะ T-11 เป็น "เสร็จ รอทีมตรวจ"
+
+ผล test: `cd frontend && npm test -- --run src/__tests__/AC-07-04.test.jsx` ผ่าน 1 test และ 1 test suite ใน 3.39 วินาที
+
+สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่พบสิ่งที่ต้องเดาเพิ่ม; test ใช้ API จำลองตามสัญญาใน plan และไม่เริ่ม T-12
+
+## #41 | 4 ต.ค. 2569 | Copilot Chat (Agent) | /implement T-02 specs/002-booking/tasks.md
+
+ไฟล์ที่สร้างหรือแก้: backend/app/db/models.py, specs/002-booking/tasks.md
+
+ผลการทำงาน: เพิ่ม `status_history_cutoff` สำหรับเส้นตัดย้อนหลัง 24 เดือนปฏิทิน และ `purge_status_history` ที่ลบเฉพาะประวัติเก่ากว่าเส้นตัด; ใช้ `set_status` เดิมบันทึก job_status_history; เปลี่ยนสถานะ T-02 เป็น "เสร็จ รอทีมตรวจ"
+
+ผล test: focused SQLite check ผ่าน โดยยืนยันการบันทึก status history และลบรายการเก่า 1 รายการ พร้อมคงรายการที่อยู่ตรงเส้น 24 เดือนไว้
+
+สิ่งที่เกือบต้องเดาแต่ถามแทน: spec ไม่ระบุจังหวะเรียก purge จึงไม่เพิ่ม startup trigger ใน main.py และไม่เปลี่ยน migration ที่ไม่มี schema ใหม่
+
+## #39 | 4 ต.ค. 2569 | Copilot Chat (Agent) | /implement T-01 specs/002-booking/tasks.md
+
+ไฟล์ที่สร้างหรือแก้: backend/app/config.py, backend/app/db/models.py, specs/002-booking/tasks.md
+
+ผลการทำงาน: ตรวจโครงโปรเจกต์และ schema ตาม plan; เพิ่ม `Payment.captured_at` ให้ตรงกับโมเดลใน plan และปรับคำอธิบาย HOLD_MINUTES/GATEWAY_TIMEOUT_SECONDS จาก Q-18/Q-19 เป็น ASM-08/ASM-09; เปลี่ยนสถานะ T-01 เป็น "เสร็จ รอทีมตรวจ"
+
+ผล test: `cd backend && pytest -q tests/test_booking.py tests/test_payment.py` ผ่าน 7 passed, 1 warning; schema check ผ่าน 8 ตารางและตรวจพบคอลัมน์ `captured_at`
+
+สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่พบข้อมูลที่ต้องเดาเพิ่ม; full suite มี failure เดิมใน `tests/test_load_scaled.py` ซึ่งอยู่นอกขอบเขตไฟล์ของ T-01 จึงไม่แก้ใน task นี้
