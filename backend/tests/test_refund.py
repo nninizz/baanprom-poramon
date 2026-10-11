@@ -1,10 +1,9 @@
-"""AC-07-10 Scenario Outline จาก booking.feature (T-06) ทีละแถวของ BR-01
-R3 ข้าม (รอ Q-14) ตาม D-07-04 แต่ยังตรวจพฤติกรรมชั่วคราวว่าปฏิเสธจริง"""
+"""AC-07-10 Scenario Outline จาก booking.feature ทีละแถวของ BR-01"""
 from datetime import timedelta
 
 import pytest
 
-from app.db.models import Job, set_status
+from app.db.models import Job, Refund, set_status
 from tests.conftest import NOW, book
 
 
@@ -50,14 +49,10 @@ def test_AC_07_10_refund_R6_not_allowed(client, db, seed):
     db.refresh(job); assert job.status == "in_progress"
 
 
-# รองรับ AC-07-10 แถว R3: รอ Q-14 ยังตัดสินยอดคืนไม่ได้ จึงข้าม แต่พฤติกรรมชั่วคราวต้องปฏิเสธ
-@pytest.mark.skip(reason="รอ Q-14 (BR-01 R3) เจ้าของยังไม่ตอบว่าคืนเท่าไร ดู spec ข้อ 9 และ D-07-04")
-def test_AC_07_10_refund_R3():
-    pass
-
-
-def test_AC_07_10_refund_R3_temporary_behaviour(client, db, seed):
+# รองรับ AC-07-10 แถว R3 (ASM-11): ยกเลิกไม่ได้และไม่มี Refund
+def test_AC_07_10_refund_R3_not_allowed(client, db, seed):
     job = make_confirmed_job(client, db, seed)
     set_status(db, job, "en_route", NOW); db.commit()
     r = cancel(client, job.id, "customer", job.scheduled_start - timedelta(hours=1))
     assert r.status_code == 409 and r.json()["rule"] == "R3" and "call center" in r.json()["message"]
+    assert db.query(Refund).filter(Refund.job_id == job.id).count() == 0

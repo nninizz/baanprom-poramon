@@ -1,11 +1,16 @@
 """ใส่ข้อมูลสมมติสำหรับเปิดดูหน้าจอ (ไม่ใช่ส่วนของระบบ) รัน: python seed_demo.py"""
 from datetime import datetime, timedelta
 
+from sqlalchemy import inspect, text
+
 from app.db.session import engine, SessionLocal
 from app.db.migrations.m001_init import upgrade
 from app.db.models import Customer, ServiceAddress, Technician, TimeSlot
 
 upgrade(engine)
+if "captured_at" not in {column["name"] for column in inspect(engine).get_columns("payments")}:
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE payments ADD COLUMN captured_at DATETIME"))
 db = SessionLocal()
 if not db.get(Customer, 1):
     c = Customer(name="สมชาย", phone="081-234-5678"); db.add(c); db.flush()

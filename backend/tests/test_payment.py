@@ -8,7 +8,7 @@ from tests.conftest import book
 
 # รองรับ AC-07-05 (REQ-IF-001, REQ-IF-005, UC-07 E1)
 def test_AC_07_05_payment_timeout(client, db, seed, gateway):
-    # Given Payment Gateway ไม่ตอบคำขอ authorize ภายใน 30 วินาที (Q-19 ชั่วคราว)
+    # Given Payment Gateway ไม่ตอบคำขอ authorize ภายใน 30 วินาที (ASM-09)
     gateway.mode, gateway.inquiry_answer = "timeout", "unknown"
     # When ระบบสอบถามสถานะด้วย reference เดิม และได้คำตอบ unknown
     res = book(client, customer_id=seed["somchai"].id, slot_id=seed["slot"].id, address_id=seed["addr"].id)
@@ -23,7 +23,7 @@ def test_AC_07_05_payment_timeout(client, db, seed, gateway):
     # inquiry ต้องใช้ ref เดิมกับ authorize
     refs = {c.split(":")[1] for c in gateway.calls if c.startswith(("authorize", "inquiry"))}
     assert len(refs) == 1
-    # And ระบบรอ gateway ไม่เกิน 30 วินาที ตาม spec ข้อ 9 (Q-19 ค่าชั่วคราว) GAP-07: รอบแรก AI ตั้ง 60 ตาม IF-01
+    # And ระบบรอ gateway ไม่เกิน 30 วินาทีตาม ASM-09
     assert gateway.last_timeout_seconds == 30
 
 
@@ -55,6 +55,10 @@ def test_AC_07_07_inquiry_approved_no_double_charge(client, db, seed, gateway):
     job = db.get(Job, res.json()["job_id"]); db.refresh(job)
     assert job.status == "confirmed"
     # And มีรายการชำระที่สถานะ สำเร็จ 1 รายการเท่านั้น
-    assert len(db.scalars(select(Payment).where(Payment.job_id == job.id, Payment.result == "success")).all()) == 1
+    payments = db.scalars(select(Payment).where(Payment.job_id == job.id, Payment.result == "success")).all()
+    assert len(payments) == 1 and payments[0].captured_at is not None
     # And ไม่มีการส่งคำขอ authorize ครั้งที่สอง
     assert sum(1 for c in gateway.calls if c.startswith("authorize")) == 1
+    refs = {c.split(":")[1] for c in gateway.calls if c.startswith(("authorize", "inquiry", "capture"))}
+    assert len(refs) == 1
+    assert sum(1 for c in gateway.calls if c.startswith("capture")) == 1

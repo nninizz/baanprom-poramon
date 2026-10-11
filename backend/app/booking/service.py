@@ -23,7 +23,7 @@ class PaymentFailed(Exception):
 
 
 def hold_slot(db, slot: TimeSlot, customer_id: int, now: datetime) -> TimeSlot:
-    # รองรับ REQ-FN-041: ล็อก HOLD_MINUTES นาที (Q-18) ถ้าคนอื่นล็อกอยู่ให้ปฏิเสธ
+    # รองรับ REQ-FN-041 และ ASM-08: ล็อก 10 นาที ถ้าคนอื่นล็อกอยู่ให้ปฏิเสธ
     release_expired_holds(db, now)
     if slot.state == SLOT_BOOKED or (slot.state == SLOT_HELD and slot.held_by_customer_id != customer_id):
         raise SlotTaken(find_alternatives(db, slot, now, customer_id))

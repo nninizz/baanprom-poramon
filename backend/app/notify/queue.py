@@ -32,6 +32,11 @@ class NotificationQueue:
     def for_job(self, job_id: int) -> list[Message]:
         return [m for m in self.items if m.job_id == job_id]
 
+    # รองรับ REQ-FN-012 และ ASM-10: retry ข้อความเดิมโดยไม่สร้างงานหรือข้อความซ้ำ
+    def retry(self, message: Message, now: datetime) -> Message:
+        message.due_at = now + timedelta(seconds=config.NOTIFY_WITHIN_SECONDS)
+        return message
+
     def as_dicts(self) -> list[dict]:
         return [asdict(m) for m in self.items]
 

@@ -25,7 +25,9 @@ def test_AC_07_01_booking_success(client, db, seed, gateway):
     db.refresh(seed["slot"])
     assert seed["slot"].state == "booked"
     # And มีรายการชำระมัดจำ 1 รายการเท่านั้น (GAP-06: เพิ่ม assert นี้หลังพบว่า test เดิมผ่านแม้ตัดเงินซ้ำ)
-    assert db.scalar(select(Payment).where(Payment.job_id == job.id, Payment.result == "success")) is not None
+    payment = db.scalar(select(Payment).where(Payment.job_id == job.id, Payment.result == "success"))
+    assert payment is not None and payment.captured_at == NOW
+    assert gateway.calls.count(f"capture:{payment.gateway_ref}") == 1
     assert len(db.scalars(select(Payment).where(Payment.job_id == job.id)).all()) == 1
 
 
@@ -55,6 +57,17 @@ def test_AC_07_03_notify_both_within_60s(client, db, seed):
     assert sorted(m.to_role for m in msgs) == ["customer", "technician"]
     # And ทั้งสองข้อความถูกส่งภายใน 60 วินาทีนับจากเวลาสร้างงาน
     assert all(m.due_at <= m.created_at + timedelta(seconds=60) for m in msgs)
+
+
+# รองรับ ASM-10: retry ข้อความเดิมโดยไม่สร้างข้อความซ้ำ
+def test_AC_07_03_notification_retry_keeps_single_message():
+    queue.clear()
+    created_at = NOW
+    message = queue.enqueue("customer", 1, "แจ้งเตือน", 1, created_at)
+    retried = queue.retry(message, created_at + timedelta(seconds=10))
+    assert retried is message
+    assert len(queue.for_job(1)) == 1
+    assert retried.due_at == created_at + timedelta(seconds=70)
 
 
 # รองรับ AC-07-04 (REQ-FN-041, UC-07 E2, CR-01)

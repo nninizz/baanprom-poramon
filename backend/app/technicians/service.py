@@ -18,10 +18,14 @@ def distance_km(lat1, lng1, lat2, lng2) -> float:
 
 
 def release_expired_holds(db, now: datetime) -> None:
-    # รองรับ AS-07: ล็อกหมดอายุเองโดยไม่ต้องมีใครปลด ตรวจทุกครั้งที่อ่าน slot
+    """ปลดล็อกที่หมดอายุและคงสถานะว่างไว้ในฐานข้อมูล (REQ-FN-041, AS-07)."""
+    changed = False
     for slot in db.scalars(select(TimeSlot).where(TimeSlot.state == SLOT_HELD)):
         if slot.hold_expires_at and slot.hold_expires_at <= now:
             slot.state, slot.held_by_customer_id, slot.hold_expires_at = SLOT_FREE, None, None
+            changed = True
+    if changed:
+        db.commit()
 
 
 def slot_visible_to(slot: TimeSlot, customer_id: int | None) -> bool:

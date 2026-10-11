@@ -15,7 +15,7 @@ def charge_deposit(db, job: Job, gateway: Gateway, now: datetime) -> Payment:
     กติกา: authorize เรียกได้ครั้งเดียวต่อ ref (REQ-IF-005 ห้ามตัดเงินซ้ำ)"""
     ref = f"BP-{job.id}-{uuid.uuid4().hex[:8]}"
     try:
-        # รอได้ไม่เกิน GATEWAY_TIMEOUT_SECONDS (Q-19 ค่าชั่วคราว 30 วินาที ตาม spec ข้อ 9)
+        # รองรับ REQ-IF-001 และ ASM-09: รอ gateway ไม่เกิน 30 วินาที
         result = gateway.authorize(ref, job.deposit_amount, timeout_seconds=config.GATEWAY_TIMEOUT_SECONDS)
     except GatewayTimeout:
         # รองรับ REQ-IF-005: ไม่ตอบใน gateway-timeout ให้ถามสถานะด้วย ref เดิม ไม่ authorize ซ้ำ
@@ -25,7 +25,7 @@ def charge_deposit(db, job: Job, gateway: Gateway, now: datetime) -> Payment:
     if result.status == "approved":
         gateway.capture(ref)  # D-07-03 capture หลัง approved เท่านั้น
         payment = Payment(job_id=job.id, amount=job.deposit_amount, gateway_ref=ref,
-                          result="success", authorized_at=now)
+                          result="success", authorized_at=now, captured_at=now)
     elif result.status == "declined":
         payment = Payment(job_id=job.id, amount=job.deposit_amount, gateway_ref=ref,
                           result="failed", authorized_at=now)
